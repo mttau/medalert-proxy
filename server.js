@@ -5,6 +5,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// CORS middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*'); // Allows requests from any origin
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
+
 app.all('/proxy', async (req, res) => {
     const url = req.query.url;
     if (!url) {

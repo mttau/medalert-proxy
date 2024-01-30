@@ -1,5 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch');
+const https = require('https'); // Import the https module
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -12,17 +13,31 @@ app.use((req, res, next) => {
     next();
 });
 
+// CORS preflight handling
+app.options('/proxy', (req, res) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.send();
+});
+
 app.all('/proxy', async (req, res) => {
     const url = req.query.url;
     if (!url) {
         return res.status(400).send('URL parameter is required');
     }
 
+    // Custom agent for the fetch request
+    const agent = new https.Agent({  
+        rejectUnauthorized: false // This disables SSL certificate validation
+    });
+
     try {
         const response = await fetch(url, {
             method: req.method,
             headers: req.headers,
             body: ['GET', 'HEAD'].includes(req.method) ? null : JSON.stringify(req.body),
+            agent: agent // Use the custom agent
         });
 
         const data = await response.text();

@@ -54,8 +54,8 @@ app.post('/deactivate', async (req, res) => {
     const targetUrl = `https://restapi10.jasper.com/rws/api/v1/devices/${iccid}`;
 
     // Replace these with environment variables or a secure storage method
-    const username = 'YOUR_USERNAME';
-    const apiKey = 'YOUR_API_KEY';
+    const username = 'matthewtalia2';
+    const apiKey = 'd988024b-9e25-4493-9c2b-e5b6c92fe041';
     const encodedCredentials = Buffer.from(username + ':' + apiKey).toString('base64');
 
     const headers = {

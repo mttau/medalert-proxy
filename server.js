@@ -1,27 +1,20 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const https = require('https'); // Import the https module
+const https = require('https');
+const cors = require('cors'); // Import the cors module
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// Existing CORS middleware
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-    next();
-});
+// Use cors middleware to handle CORS requests
+app.use(cors({
+    origin: '*' // This will allow access from any origin. Adjust as necessary for production.
+}));
 
-// Existing CORS preflight handling
-app.options('/proxy', (req, res) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.send();
-});
+// Remove manual CORS headers setup since cors middleware is used
 
-// Existing proxy route
+// Proxy route
 app.all('/proxy', async (req, res) => {
     const url = req.query.url;
     if (!url) {
@@ -29,7 +22,7 @@ app.all('/proxy', async (req, res) => {
     }
 
     const agent = new https.Agent({  
-        rejectUnauthorized: false // This disables SSL certificate validation
+        rejectUnauthorized: false // Note: disabling SSL certificate validation may pose a security risk
     });
 
     try {
@@ -37,7 +30,7 @@ app.all('/proxy', async (req, res) => {
             method: req.method,
             headers: req.headers,
             body: ['GET', 'HEAD'].includes(req.method) ? null : JSON.stringify(req.body),
-            agent: agent // Use the custom agent
+            agent: agent
         });
 
         const data = await response.text();
@@ -48,16 +41,15 @@ app.all('/proxy', async (req, res) => {
     }
 });
 
-// New endpoint for handling deactivation requests
-// (Your existing /deactivate endpoint code remains unchanged)
+// Endpoint for handling deactivation requests remains unchanged
 
-// New endpoint for sending SMS messages
+// Endpoint for sending SMS messages
 app.post('/sendSms', async (req, res) => {
     const { iccid, messageText } = req.body;
-    const apiVersion = '1'; // Adjusted to a string for URL construction
+    const apiVersion = '1';
     const targetUrl = `https://restapi10.jasper.com/rws/api/v${apiVersion}/devices/${iccid}/smsMessages`;
 
-    // Use environment variables or a secure method for storing credentials
+    // Use environment variables for storing credentials securely
     const username = process.env.JASPER_USERNAME;
     const apiKey = process.env.JASPER_API_KEY;
     const encodedCredentials = Buffer.from(username + ':' + apiKey).toString('base64');
@@ -70,7 +62,6 @@ app.post('/sendSms', async (req, res) => {
 
     const data = {
         "messageText": messageText,
-        // Add any other required fields as per your needs
     };
 
     try {

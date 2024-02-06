@@ -1,6 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch');
-const https = require('https');
+const https = require('https'); // Import the https module
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -29,7 +29,7 @@ app.all('/proxy', async (req, res) => {
     }
 
     const agent = new https.Agent({  
-        rejectUnauthorized: false
+        rejectUnauthorized: false // This disables SSL certificate validation
     });
 
     try {
@@ -37,7 +37,7 @@ app.all('/proxy', async (req, res) => {
             method: req.method,
             headers: req.headers,
             body: ['GET', 'HEAD'].includes(req.method) ? null : JSON.stringify(req.body),
-            agent: agent
+            agent: agent // Use the custom agent
         });
 
         const data = await response.text();
@@ -49,13 +49,17 @@ app.all('/proxy', async (req, res) => {
 });
 
 // New endpoint for handling deactivation requests
-app.post('/deactivate', async (req, res) => {
-    const { iccid, effectiveDate } = req.body;
-    const targetUrl = `https://restapi10.jasper.com/rws/api/v1/devices/${iccid}`;
+// (Your existing /deactivate endpoint code remains unchanged)
 
-    // Replace these with environment variables or a secure storage method
-    const username = 'matthewtalia2';
-    const apiKey = 'd988024b-9e25-4493-9c2b-e5b6c92fe041';
+// New endpoint for sending SMS messages
+app.post('/sendSms', async (req, res) => {
+    const { iccid, messageText } = req.body;
+    const apiVersion = '1'; // Adjusted to a string for URL construction
+    const targetUrl = `https://restapi10.jasper.com/rws/api/v${apiVersion}/devices/${iccid}/smsMessages`;
+
+    // Use environment variables or a secure method for storing credentials
+    const username = process.env.JASPER_USERNAME;
+    const apiKey = process.env.JASPER_API_KEY;
     const encodedCredentials = Buffer.from(username + ':' + apiKey).toString('base64');
 
     const headers = {
@@ -65,13 +69,13 @@ app.post('/deactivate', async (req, res) => {
     };
 
     const data = {
-        "status": "DEACTIVATED",
-        "effectiveDate": effectiveDate
+        "messageText": messageText,
+        // Add any other required fields as per your needs
     };
 
     try {
         const apiResponse = await fetch(targetUrl, {
-            method: 'PUT',
+            method: 'POST',
             headers: headers,
             body: JSON.stringify(data)
         });
